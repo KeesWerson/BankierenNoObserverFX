@@ -1,4 +1,4 @@
-package internettoegang;
+package internettoegangTest;
 
 /**
  * Created by Kees on 11/01/2016.

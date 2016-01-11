@@ -1,6 +1,6 @@
 package bank.bankieren;
 
-class Rekening implements IRekeningTbvBank {
+public class Rekening implements IRekeningTbvBank {
 
     private static final long serialVersionUID = 7221569686169173632L;
     private static final int KREDIETLIMIET = -10000;
@@ -17,7 +17,7 @@ class Rekening implements IRekeningTbvBank {
      * @param klant de eigenaar van deze rekening
      * @param currency de munteenheid waarin het saldo is uitgedrukt
      */
-    Rekening(int number, IKlant klant, String currency) {
+    public Rekening(int number, IKlant klant, String currency) {
         this(number, klant, new Money(0, currency));
     }
 
@@ -31,7 +31,7 @@ class Rekening implements IRekeningTbvBank {
      * @param city de woonplaats van de eigenaar
      * @param currency de munteenheid waarin het saldo is uitgedrukt
      */
-    Rekening(int number, IKlant klant, Money saldo) {
+    public Rekening(int number, IKlant klant, Money saldo) {
         this.nr = number;
         this.eigenaar = klant;
         this.saldo = saldo;

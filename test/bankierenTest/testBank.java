@@ -1,5 +1,6 @@
 package bankierenTest;
 
+import bank.bankieren.Bank;
 import bank.bankieren.Klant;
 import bank.bankieren.Money;
 import bank.bankieren.Rekening;
@@ -14,34 +15,54 @@ import org.junit.Test;
  */
 public class testBank extends TestCase {
 
+    private Bank bank;
+
     @Before
     public void setUp() throws Exception {
-        Klant klant1 = new Klant("Jim Sanders", "Nuth");
-        Rekening rekening1 = new Rekening(1337,klant1,"Euro");
-    }
+        bank = new Bank("Rabobank");
 
+    }
 
     @Test
     public void testOpenRekeningNieuweKlant(){
-        // creatie van een nieuwe bankrekening met een identificerend rekeningnummer;
-        Klant klant2 = new Klant("Hans Worst", "Darmstadt");
-        Money money2 = new Money(100000,"Euro");
-        Rekening rekening2 = new Rekening(100,klant2,money2);
+        /**
+         * creatie van een nieuwe bankrekening met een identificerend rekeningnummer;
+         * alleen als de klant, geidentificeerd door naam en plaats, nog niet bestaat
+         * wordt er ook een nieuwe klant aangemaakt
+         *
+         * @param naam
+         *            van de eigenaar van de nieuwe bankrekening
+         * @param plaats
+         *            de woonplaats van de eigenaar van de nieuwe bankrekening
+         * @return -1 zodra naam of plaats een lege string en anders het nummer van de
+         *         gecreeerde bankrekening
+         */
 
-        Assert.assertEquals("Rekeningnummer klopt niet.",100,rekening2.getNr());
-        Assert.assertEquals("Klantnaam klopt niet.","Hans Worst",rekening2.getEigenaar().getNaam());
-        Assert.assertEquals("Klantplaats klopt niet.", "Darmstadt", rekening2.getEigenaar().getPlaats());
-        Assert.assertEquals("Saldo klopt niet.", money2, rekening2.getSaldo());
-
+        Assert.assertEquals("Rekening niet goed aangemaakt.",100000000,bank.openRekening("Hans Worst","Darmstadt"));
+        Assert.assertEquals("Rekening niet goed aangemaakt.", 100000001, bank.openRekening("Henk Penck", "Swekdorp"));
+        Assert.assertEquals("Rekening toch aangemaakt.", -1, bank.openRekening("",""));
     }
 
     @Test
     public void testOpenRekeningBestaandeKlant(){
-        //creatie van een nieuwe bankrekening met een identificerend rekeningnummer;
-        //alleen als de klant, geidentificeerd door naam en plaats, nog niet bestaat
-        //wordt er ook een nieuwe klant aangemaakt
+        /**
+         * creatie van een nieuwe bankrekening met een identificerend rekeningnummer;
+         *
+         * @param naam
+         *            van de eigenaar van de nieuwe bankrekening
+         * @param plaats
+         *            de woonplaats van de eigenaar van de nieuwe bankrekening
+         * @return -1 zodra naam of plaats een lege string en anders het nummer van de
+         *         gecreeerde bankrekening
+         */
+
+        Assert.assertEquals("Rekening niet goed aangemaakt.",100000000,bank.openRekening("Hans Worst","Darmstadt"));
+        Assert.assertEquals("Rekening niet goed aangemaakt.", 100000001, bank.openRekening("Hans Worst","Darmstadt"));
 
     }
+
+
+
 
     @Test
     public void testMaakOver(){

@@ -1,16 +1,28 @@
 package internettoegang;
 
+import bank.bankieren.Bank;
+import bank.internettoegang.Balie;
+import bank.internettoegang.Bankiersessie;
+import fontys.util.InvalidSessionException;
+import junit.framework.Assert;
+
 import org.junit.Before;
 import org.junit.Test;
+
+import java.rmi.RemoteException;
 
 /**
  * Created by Kees on 11/01/2016.
  */
 public class testBalie {
 
+    private Balie balieING;
+
     @Before
     public void setUp() throws Exception {
-
+        //Nieuwe balie met bijhorende bank aanmaken om te testen.
+        Bank bankING = new Bank("ING");
+        balieING = new Balie(bankING);
     }
 
     @Test
@@ -28,6 +40,10 @@ public class testBalie {
          * kan worden verkregen
          */
 
+        String accountName;
+        accountName = balieING.openRekening("KeesWerson", "Valkenswaard", "iziPass");
+
+        Assert.assertNotNull(accountName);
     }
 
     @Test
@@ -42,5 +58,13 @@ public class testBalie {
          * account mits accountnaam en wachtwoord matchen, anders null
          */
 
+        Bankiersessie bSessie = null;
+        try {
+            bSessie = (Bankiersessie) balieING.logIn("KeesWerson", "iziPass");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertNotNull(bSessie);
     }
 }

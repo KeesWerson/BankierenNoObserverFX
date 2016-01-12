@@ -2,6 +2,7 @@ package internettoegangTest;
 
 import bank.bankieren.Bank;
 import bank.bankieren.Money;
+import bank.bankieren.Rekening;
 import bank.gui.BankierSessieController;
 import bank.internettoegang.Balie;
 import bank.internettoegang.Bankiersessie;
@@ -133,7 +134,7 @@ public class testBankiersessie {
 
         org.junit.Assert.assertEquals("Geld niet goed bijgeschreven.", 50, bankRABO.getRekening(rekeningNummerKrijger).getSaldo().getCents());
         org.junit.Assert.assertEquals("Geld niet goed afgeschreven.", -50, bankRABO.getRekening(rekeningNummerGever).getSaldo().getCents());
-        Assert.assertTrue(gelukt);
+        Assert.assertTrue("Overmaken is niet gelukt", gelukt);
     }
 
     @Test
@@ -142,6 +143,16 @@ public class testBankiersessie {
          * sessie wordt beeindigd
          */
 
+        //Log opnieuw in en uit om het uitloggen te testen.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            Assert.assertTrue("Banksessie is niet correct aangemaakt", bSessieRABO.isGeldig());
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertTrue("Banksessie is niet correct afgesloten.", bSessieRABO.isGeldig());
     }
 
     @Test
@@ -153,5 +164,36 @@ public class testBankiersessie {
          * @throws RemoteException
          */
 
+        Rekening r = null;
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            r = (Rekening) bSessieRABO.getRekening();
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertEquals("Correcte rekening is niet opgehaalt.", r.getEigenaar().getNaam(), "HansLeeuwen");
+
+        //Nu wachten tot dat de sessie verloopt
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        boolean sessionOverExceptie = false;
+        try {
+            r = (Rekening) bSessieRABO.getRekening();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+            sessionOverExceptie = true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertTrue("Sessie is niet correct afgelopen.", sessionOverExceptie);
     }
 }

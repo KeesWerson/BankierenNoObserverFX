@@ -8,7 +8,9 @@ import fontys.util.NumberDoesntExistException;
 import junit.framework.TestCase;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 
 /**
@@ -74,7 +76,7 @@ public class testBank extends TestCase {
 
 
     @Test
-    public void testMaakOver() throws NumberDoesntExistException {
+    public void testMaakOverSucces() throws NumberDoesntExistException {
         /**
          * er wordt bedrag overgemaakt van de bankrekening met nummer bron naar de
          * bankrekening met nummer bestemming.
@@ -98,12 +100,95 @@ public class testBank extends TestCase {
     }
 
     @Test
+    public void testMaakOverFail() throws NumberDoesntExistException {
+        /**
+         * er wordt bedrag overgemaakt van de bankrekening met nummer bron naar de
+         * bankrekening met nummer bestemming, mits het afschrijven van het bedrag
+         * van de rekening met nr bron niet lager wordt dan de kredietlimiet van deze
+         * rekening
+         *
+         * @param bron
+         * @param bestemming
+         *            ongelijk aan bron
+         * @param bedrag
+         *            is groter dan 0
+         * @return <b>true</b> als de overmaking is gelukt, anders <b>false</b>
+         * @throws NumberDoesntExistException
+         *             als een van de twee bankrekeningnummers onbekend is
+         */
+
+        boolean gelukt = bank.maakOver(100000000,100000001,new Money(10001,"€"));
+
+        Assert.assertEquals("Geld toch bijgeschreven.",0,bank.getRekening(100000001).getSaldo().getCents());
+        Assert.assertEquals("Geld toch afgeschreven.",0,bank.getRekening(100000000).getSaldo().getCents());
+        Assert.assertEquals("True teruggegeven.", false, gelukt);
+
+    }
+
+    @Test
+    public void testMaakOverOnbekendeRekening() throws NumberDoesntExistException {
+        /**
+         * er wordt bedrag overgemaakt van de bankrekening met nummer bron naar de
+         * bankrekening met nummer bestemming.
+         *
+         * @param bron
+         * @param bestemming
+         *            ongelijk aan bron
+         * @param bedrag
+         *            is groter dan 0
+         * @return <b>true</b> als de overmaking is gelukt, anders <b>false</b>
+         * @throws NumberDoesntExistException
+         *             als een van de twee bankrekeningnummers onbekend is
+         */
+
+        try{
+            boolean gelukt = bank.maakOver(100000000,1254789963,new Money(1001,"€"));
+            fail("Onbekende bankrekening bestemming wordt toch gebruikt.");
+        }
+        catch(NumberDoesntExistException e){
+            //System.out.println("testMaakOverOnbekendeRekening: NumberDoesntExistException voor bestemming succesvol opgegooid.");
+        }
+
+        try{
+            boolean gelukt = bank.maakOver(321456987,100000000,new Money(1001,"€"));
+            fail("Onbekende bankrekening overmaker wordt toch gebruikt.");
+        }
+        catch(NumberDoesntExistException e){
+            //System.out.println("testMaakOverOnbekendeRekening: NumberDoesntExistException voor overmaker succesvol opgegooid.");
+        }
+
+    }
+
+    @Test
     public void testGetRekening(){
+        /**
+         * @param nr
+         * @return de bankrekening met nummer nr mits bij deze bank bekend, anders null
+         */
+
+        Assert.assertNotNull(bank.getRekening(100000000));
+        Assert.assertEquals("Verkeerde rekening teruggegeven.",100000000,bank.getRekening(100000000).getNr());
+        Assert.assertEquals("Verkeerde eigenaar teruggegeven.","Jim Sanders",bank.getRekening(100000000).getEigenaar().getNaam());
+        Assert.assertEquals("Verkeerde plaatsnaam teruggegeven.","Nuth",bank.getRekening(100000000).getEigenaar().getPlaats());
+    }
+
+    @Test
+    public void testGetRekeningNull(){
+        /**
+         * @param nr
+         * @return de bankrekening met nummer nr mits bij deze bank bekend, anders null
+         */
+
+        Assert.assertNull(bank.getRekening(321654987));
 
     }
 
     @Test
     public void testGetName(){
+        /**
+         * @return de naam van deze bank
+         */
 
+        Assert.assertEquals("Verkeerde banknaam teruggegeven.","Rabobank", bank.getName());
     }
 }

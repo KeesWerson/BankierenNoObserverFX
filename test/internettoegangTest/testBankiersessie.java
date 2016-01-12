@@ -2,6 +2,7 @@ package internettoegangTest;
 
 import bank.bankieren.Bank;
 import bank.bankieren.Money;
+import bank.bankieren.Rekening;
 import bank.gui.BankierSessieController;
 import bank.internettoegang.Balie;
 import bank.internettoegang.Bankiersessie;
@@ -21,7 +22,8 @@ public class testBankiersessie {
     private Bank bankRABO;
     private Balie balieRABO;
     private String accountName;
-    private int rekeningNummer;
+    private int rekeningNummerGever;
+    private int rekeningNummerKrijger;
     private Bankiersessie bSessieRABO;
 
     @Before
@@ -33,9 +35,10 @@ public class testBankiersessie {
         //creëer een test account
         accountName = balieRABO.openRekening("HansLeeuwen", "Tilburg", "123456");
 
-        //Log in om de sessie te krijgen
+        //Log in om de sessie te krijgen en gegevens van de 'gever' op te slaan.
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            rekeningNummerGever = bSessieRABO.getRekening().getNr();
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -108,7 +111,7 @@ public class testBankiersessie {
         //Log opnieuw in en uit voor een nieuwe sessie.
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(bestemmingRekening, "1234");
-            rekeningNummer = bSessieRABO.getRekening().getNr();
+            rekeningNummerKrijger = bSessieRABO.getRekening().getNr();
             bSessieRABO.logUit();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -117,9 +120,10 @@ public class testBankiersessie {
         }
 
         //Log in op het andere account om de transactie te volgrengen.
+        boolean gelukt = false;
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
-            bSessieRABO.maakOver(rekeningNummer, new Money(5, "€"));
+            gelukt = bSessieRABO.maakOver(rekeningNummerKrijger, new Money(50, "â‚¬"));
         } catch (NumberDoesntExistException e) {
             e.printStackTrace();
         } catch (InvalidSessionException e) {
@@ -128,6 +132,39 @@ public class testBankiersessie {
             e.printStackTrace();
         }
 
+        org.junit.Assert.assertEquals("Geld niet goed bijgeschreven.", 50, bankRABO.getRekening(rekeningNummerKrijger).getSaldo().getCents());
+        org.junit.Assert.assertEquals("Geld niet goed afgeschreven.", -50, bankRABO.getRekening(rekeningNummerGever).getSaldo().getCents());
+        Assert.assertTrue("Overmaken is niet gelukt", gelukt);
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void testMaakOver_ZelfdeRekening(){
+        //Testen om geld naar hetzelfde account over te maken.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            bSessieRABO.maakOver(rekeningNummerGever, new Money(50, "â‚¬"));
+        } catch (NumberDoesntExistException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void testMaakOver_NegatiefBedrag(){
+        //Testen om een negatief bedrag over te maken.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            bSessieRABO.maakOver(rekeningNummerKrijger, new Money(-50, "â‚¬"));
+        } catch (NumberDoesntExistException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -136,6 +173,16 @@ public class testBankiersessie {
          * sessie wordt beeindigd
          */
 
+        //Log opnieuw in en uit om het uitloggen te testen.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            Assert.assertTrue("Banksessie is niet correct aangemaakt", bSessieRABO.isGeldig());
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertFalse("Banksessie is niet correct afgesloten.", bSessieRABO.isGeldig());
     }
 
     @Test
@@ -147,5 +194,36 @@ public class testBankiersessie {
          * @throws RemoteException
          */
 
+        Rekening r = null;
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            r = (Rekening) bSessieRABO.getRekening();
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertEquals("Correcte rekening is niet opgehaalt.", r.getEigenaar().getNaam(), "HansLeeuwen");
+
+        //Nu wachten tot dat de sessie verloopt
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        boolean sessionOverExceptie = false;
+        try {
+            r = (Rekening) bSessieRABO.getRekening();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+            sessionOverExceptie = true;
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        Assert.assertTrue("Sessie is niet correct afgelopen.", sessionOverExceptie);
     }
 }

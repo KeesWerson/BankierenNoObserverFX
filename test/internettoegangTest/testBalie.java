@@ -50,12 +50,15 @@ public class testBalie {
     @Test
     public void testOpenRekening_NullWaardes(){
         String accountName;
+        //null voor naam
         accountName = balieING.openRekening("", "Eindhoven", "");
         Assert.assertNull(accountName);
 
+        //null voor plaatsnaam
         accountName = balieING.openRekening("Frits", "", "");
         Assert.assertNull(accountName);
 
+        //null voor wachtwoord
         accountName = balieING.openRekening("Frits", "Eindhoven", "");
         Assert.assertNull(accountName);
     }
@@ -63,9 +66,11 @@ public class testBalie {
     @Test
     public void testOpenRekening_FoutWachtwoord(){
         String accountName;
+        //wachtwoord kleiner dan 4
         accountName = balieING.openRekening("Jan", "Veldhoven", "123");
         Assert.assertNull(accountName);
 
+        //wachtwoord groter dan 8
         accountName = balieING.openRekening("Jan", "Veldhoven", "123456789");
         Assert.assertNull(accountName);
     }
@@ -109,8 +114,8 @@ public class testBalie {
 
         Bankiersessie bSessie = null;
         try {
-            //Accountnaam bestaad niet
-            bSessie = (Bankiersessie) balieING.logIn("DezeNaamBestaadNiet", "tststst");
+            //Accountnaam bestaat niet
+            bSessie = (Bankiersessie) balieING.logIn("DezeNaamBestaatNiet", "tststst");
             Assert.assertNull("Log in gelukt, dit zou moeten falen.", bSessie);
 
             //Wachtwoord klopt niet

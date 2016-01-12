@@ -1,7 +1,13 @@
 package internettoegangTest;
 
+import bank.bankieren.Bank;
+import bank.bankieren.Money;
+import bank.gui.BankierSessieController;
+import bank.internettoegang.Balie;
+import bank.internettoegang.Bankiersessie;
 import fontys.util.InvalidSessionException;
 import fontys.util.NumberDoesntExistException;
+import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,9 +18,34 @@ import java.rmi.RemoteException;
  */
 public class testBankiersessie {
 
+    private Bank bankRABO;
+    private Balie balieRABO;
+    private String accountName;
+    private int rekeningNummer;
+    private Bankiersessie bSessieRABO;
+
     @Before
     public void setUp() throws Exception {
+        //Nieuwe balie met bijhorende bank aanmaken om te testen.
+        bankRABO = new Bank("ING");
+        balieRABO = new Balie(bankRABO);
 
+        //creëer een test account
+        accountName = balieRABO.openRekening("HansLeeuwen", "Tilburg", "123456");
+
+        //Log in om de sessie te krijgen
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        //Log uit.
+        try {
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -26,6 +57,31 @@ public class testBankiersessie {
          *          anders false
          */
 
+        //Log in
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
+        //Aanroep binnen de GELDIGHEIDSDUUR.
+        Assert.assertTrue("Aanroep te laat", bSessieRABO.isGeldig());
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        //Aanroep na de GELDIGHEIDSDUUR.
+        Assert.assertFalse("Aanroep te vroeg", bSessieRABO.isGeldig());
+
+        //Log uit.
+        try {
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     @Test
@@ -45,6 +101,33 @@ public class testBankiersessie {
          * @throws InvalidSessionException
          *             als sessie niet meer geldig is
          */
+
+        //Rekening waar het geld naar over wordt gemaakt.
+        String bestemmingRekening = balieRABO.openRekening("Jan", "Veldhoven", "1234");
+
+        //Log opnieuw in en uit voor een nieuwe sessie.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(bestemmingRekening, "1234");
+            rekeningNummer = bSessieRABO.getRekening().getNr();
+            bSessieRABO.logUit();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        }
+
+        //Log in op het andere account om de transactie te volgrengen.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            bSessieRABO.maakOver(rekeningNummer, new Money(5, "€"));
+        } catch (NumberDoesntExistException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+
     }
 
     @Test

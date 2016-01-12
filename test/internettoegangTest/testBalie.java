@@ -43,7 +43,31 @@ public class testBalie {
         String accountName;
         accountName = balieING.openRekening("KeesWerson", "Valkenswaard", "iziPass");
 
-        Assert.assertNotNull(accountName);
+        Assert.assertNotNull("Rekening niet correct aangemaakt.", accountName);
+        Assert.assertEquals("Fout gegenereerde accountnaam.", accountName.length(), 8);
+    }
+
+    @Test
+    public void testOpenRekening_NullWaardes(){
+        String accountName;
+        accountName = balieING.openRekening("", "Eindhoven", "");
+        Assert.assertNull(accountName);
+
+        accountName = balieING.openRekening("Frits", "", "");
+        Assert.assertNull(accountName);
+
+        accountName = balieING.openRekening("Frits", "Eindhoven", "");
+        Assert.assertNull(accountName);
+    }
+
+    @Test
+    public void testOpenRekening_FoutWachtwoord(){
+        String accountName;
+        accountName = balieING.openRekening("Jan", "Veldhoven", "123");
+        Assert.assertNull(accountName);
+
+        accountName = balieING.openRekening("Jan", "Veldhoven", "123456789");
+        Assert.assertNull(accountName);
     }
 
     @Test
@@ -58,13 +82,43 @@ public class testBalie {
          * account mits accountnaam en wachtwoord matchen, anders null
          */
 
+        String accountName;
+        accountName = balieING.openRekening("HuubHendriks", "Venlo", "Wachtwo");
+
         Bankiersessie bSessie = null;
         try {
-            bSessie = (Bankiersessie) balieING.logIn("KeesWerson", "iziPass");
+            bSessie = (Bankiersessie) balieING.logIn(accountName, "Wachtwo");
         } catch (RemoteException e) {
             e.printStackTrace();
         }
 
-        Assert.assertNotNull(bSessie);
+        Assert.assertNotNull("Log in niet gelukt.", bSessie);
+        try {
+            Assert.assertEquals("Verkeerde rekening opgehaald.", bSessie.getRekening().getEigenaar().getNaam(), "HuubHendriks");
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
+
+    @Test
+    public void testLogIn_FoutWachtwoord(){
+        String accountName;
+        accountName = balieING.openRekening("JanLinders", "Almelo", "1234");
+
+        Bankiersessie bSessie = null;
+        try {
+            //Accountnaam bestaad niet
+            bSessie = (Bankiersessie) balieING.logIn("DezeNaamBestaadNiet", "tststst");
+            Assert.assertNull("Log in gelukt, dit zou moeten falen.", bSessie);
+
+            //Wachtwoord klopt niet
+            bSessie = (Bankiersessie) balieING.logIn(accountName, "4321");
+            Assert.assertNull("Log in gelukt, dit zou moeten falen.", bSessie);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

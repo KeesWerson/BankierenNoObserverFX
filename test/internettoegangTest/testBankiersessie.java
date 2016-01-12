@@ -137,6 +137,36 @@ public class testBankiersessie {
         Assert.assertTrue("Overmaken is niet gelukt", gelukt);
     }
 
+    @Test (expected = RuntimeException.class)
+    public void testMaakOver_ZelfdeRekening(){
+        //Testen om geld naar hetzelfde account over te maken.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            bSessieRABO.maakOver(rekeningNummerGever, new Money(50, "€"));
+        } catch (NumberDoesntExistException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test (expected = RuntimeException.class)
+    public void testMaakOver_NegatiefBedrag(){
+        //Testen om een negatief bedrag over te maken.
+        try {
+            bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            bSessieRABO.maakOver(rekeningNummerKrijger, new Money(-50, "€"));
+        } catch (NumberDoesntExistException e) {
+            e.printStackTrace();
+        } catch (InvalidSessionException e) {
+            e.printStackTrace();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     public void testlogUit(){
         /**
@@ -152,7 +182,7 @@ public class testBankiersessie {
             e.printStackTrace();
         }
 
-        Assert.assertTrue("Banksessie is niet correct afgesloten.", bSessieRABO.isGeldig());
+        Assert.assertFalse("Banksessie is niet correct afgesloten.", bSessieRABO.isGeldig());
     }
 
     @Test

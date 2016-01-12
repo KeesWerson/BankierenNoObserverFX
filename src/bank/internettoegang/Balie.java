@@ -1,9 +1,13 @@
 package bank.internettoegang;
 
+import java.beans.PropertyChangeEvent;
 import java.rmi.*;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import bank.bankieren.*;
+import fontys.observer.BasicPublisher;
+import fontys.observer.RemotePropertyListener;
+import fontys.observer.RemotePublisher;
 
 public class Balie extends UnicastRemoteObject implements IBalie {
 
@@ -12,12 +16,16 @@ public class Balie extends UnicastRemoteObject implements IBalie {
 	private HashMap<String, ILoginAccount> loginaccounts;
 	//private Collection<IBankiersessie> sessions;
 	private java.util.Random random;
+	private BasicPublisher basicPublisher;
 
 	public Balie(IBank bank) throws RemoteException {
 		this.bank = bank;
 		loginaccounts = new HashMap<String, ILoginAccount>();
 		//sessions = new HashSet<IBankiersessie>();
 		random = new Random();
+		String[] props = new String[1];
+		basicPublisher = new BasicPublisher(props);
+
 	}
 
 	public String openRekening(String naam, String plaats, String wachtwoord) {
@@ -50,7 +58,8 @@ public class Balie extends UnicastRemoteObject implements IBalie {
 		if (loginaccount.checkWachtwoord(wachtwoord)) {
 			IBankiersessie sessie = new Bankiersessie(loginaccount
 					.getReknr(), bank);
-			
+
+            sessie.addListener(this,loginaccount.getReknr() + "");
 		 	return sessie;
 		}
 		else return null;
@@ -68,4 +77,22 @@ public class Balie extends UnicastRemoteObject implements IBalie {
 	}
 
 
+	@Override
+	public void propertyChange(PropertyChangeEvent propertyChangeEvent) throws RemoteException {
+        //basicPublisher.inform(this,propertyChangeEvent.getPropertyName(),propertyChangeEvent.getOldValue(),propertyChangeEvent.getNewValue());
+        basicPublisher.inform(this,((Rekening)propertyChangeEvent.getOldValue()).getNr() + "",null, ((Rekening)propertyChangeEvent.getOldValue()).getSaldo().getCents());
+        basicPublisher.inform(this,((Rekening)propertyChangeEvent.getNewValue()).getNr() + "",null, ((Rekening)propertyChangeEvent.getNewValue()).getSaldo().getCents());
+	}
+
+	@Override
+	public void addListener(RemotePropertyListener remotePropertyListener, String s) throws RemoteException {
+		basicPublisher.addProperty(s);
+		basicPublisher.addListener(remotePropertyListener,s);
+	}
+
+	@Override
+	public void removeListener(RemotePropertyListener remotePropertyListener, String s) throws RemoteException {
+		basicPublisher.removeProperty(s);
+		basicPublisher.removeListener(remotePropertyListener,s);
+	}
 }

@@ -21,7 +21,8 @@ public class testBankiersessie {
     private Bank bankRABO;
     private Balie balieRABO;
     private String accountName;
-    private int rekeningNummer;
+    private int rekeningNummerGever;
+    private int rekeningNummerKrijger;
     private Bankiersessie bSessieRABO;
 
     @Before
@@ -33,9 +34,10 @@ public class testBankiersessie {
         //creëer een test account
         accountName = balieRABO.openRekening("HansLeeuwen", "Tilburg", "123456");
 
-        //Log in om de sessie te krijgen
+        //Log in om de sessie te krijgen en gegevens van de 'gever' op te slaan.
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
+            rekeningNummerGever = bSessieRABO.getRekening().getNr();
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -108,7 +110,7 @@ public class testBankiersessie {
         //Log opnieuw in en uit voor een nieuwe sessie.
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(bestemmingRekening, "1234");
-            rekeningNummer = bSessieRABO.getRekening().getNr();
+            rekeningNummerKrijger = bSessieRABO.getRekening().getNr();
             bSessieRABO.logUit();
         } catch (RemoteException e) {
             e.printStackTrace();
@@ -117,9 +119,10 @@ public class testBankiersessie {
         }
 
         //Log in op het andere account om de transactie te volgrengen.
+        boolean gelukt = false;
         try {
             bSessieRABO = (Bankiersessie) balieRABO.logIn(accountName, "123456");
-            bSessieRABO.maakOver(rekeningNummer, new Money(5, "€"));
+            gelukt = bSessieRABO.maakOver(rekeningNummerKrijger, new Money(50, "â‚¬"));
         } catch (NumberDoesntExistException e) {
             e.printStackTrace();
         } catch (InvalidSessionException e) {
@@ -128,6 +131,9 @@ public class testBankiersessie {
             e.printStackTrace();
         }
 
+        org.junit.Assert.assertEquals("Geld niet goed bijgeschreven.", 50, bankRABO.getRekening(rekeningNummerKrijger).getSaldo().getCents());
+        org.junit.Assert.assertEquals("Geld niet goed afgeschreven.", -50, bankRABO.getRekening(rekeningNummerGever).getSaldo().getCents());
+        Assert.assertTrue(gelukt);
     }
 
     @Test

@@ -2,7 +2,6 @@ package bank.bankieren;
 
 import fontys.util.*;
 
-import java.rmi.RemoteException;
 import java.util.*;
 
 public class Bank implements IBank {
@@ -16,10 +15,20 @@ public class Bank implements IBank {
 	private int nieuwReknr;
 	private String name;
 
+
 	public Bank(String name) {
 		accounts = new HashMap<Integer,IRekeningTbvBank>();
 		clients = new ArrayList<IKlant>();
-		nieuwReknr = 100000000;	
+		nieuwReknr = 100000000;
+		switch(name){
+			case "RaboBank":
+				nieuwReknr = 1000000000 + 100000000;
+				break;
+			case "ING":
+				nieuwReknr = 2000000000 + 100000000;
+				break;
+		}
+
 		this.name = name;	
 	}
 
